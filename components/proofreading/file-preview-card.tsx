@@ -112,7 +112,7 @@ export function FilePreviewCard({ open, file, onConfirm, onTransfer }: FilePrevi
                         setActiveChapterId(chapter.id);
                       }}
                     >
-                      <span className="truncate text-sm">{chapter.title}</span>
+                      <span className="truncate text-sm" style={{paddingLeft: chapter.level ? chapter.level * 10 : 0}}>{chapter.title}</span>
                     </Button>
                   ))}
                 </div>

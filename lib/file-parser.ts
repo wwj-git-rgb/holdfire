@@ -6,6 +6,7 @@ import type { ProofreadingConfig } from "@/types/proofreading"
 export interface Chapter {
   id: string;
   title: string;
+  level?: number;
   content: string;
 }
 
@@ -61,33 +62,105 @@ export async function parsePdf(file: File): Promise<ParsedFile> {
     const arrayBuffer = await file.arrayBuffer()
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise    
 
-    const pages = []
+    // Extract text from all pages with page numbers
+    const pages: { pageNum: number; text: string }[] = []
 
-    // Extract text from all pages
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i)
       const textContent = await page.getTextContent()
-      const pageText = textContent.items.slice(0, -2).map((item: any) => item.str).join(" ")
+      const pageText = textContent.items.map((item: any) => item.str).join(" ")
       
-      if (pageText.length > 0) pages.push(pageText)
+      if (pageText.length > 0) pages.push({ pageNum: i, text: pageText })
     }
-    
-    const text = pages.join("\n\n")
+
+    // Build page text map for content extraction
+    const fullText = pages.map(p => p.text).join("\n\n")
+    const pageTextMap = new Map(pages.map(p => [p.pageNum, p.text]))
+
+    // Get outline and build chapters with content
     const outline = await pdf.getOutline()
-    const chapters = outline.map((item: any, index: number) => ({
-      id: `chapter-${index + 1}`,
-      title: item.title,
-      content: text,
-    }));
+    const chapters: Chapter[] = []
+
+    const processOutline = async (outlineItems: any[], level = 1) => {
+      for (const item of outlineItems) {
+        let startPage = 1
+        let endPage = pdf.numPages
+
+        if (item.dest) {
+          try {
+            const pageIndex = await pdf.getPageIndex(item.dest[0])
+            startPage = pageIndex + 1
+          } catch (e) {
+            console.warn('获取页面索引失败:', e)
+          }
+        }
+
+        // Find end page from next sibling or end of document
+        const currentIndex = outlineItems.indexOf(item)
+        if (currentIndex < outlineItems.length - 1) {
+          const nextItem = outlineItems[currentIndex + 1]
+          if (nextItem.dest) {
+            try {
+              const nextPageIndex = await pdf.getPageIndex(nextItem.dest[0])
+              endPage = nextPageIndex
+            } catch (e) {
+              console.warn('获取下一章节页面索引失败:', e)
+            }
+          }
+        }
+
+        // Extract content from pages between start and end
+        let chapterContent = ""
+        for (let p = startPage; p <= endPage && p <= pdf.numPages; p++) {
+          const pageText = pageTextMap.get(p)
+          if (pageText) {
+            chapterContent += pageText + "\n\n"
+          }
+        }
+
+        const id = `chapter-${chapters.length + 1}`;
+        chapters.push({
+          id,
+          title: item.title,
+          level,
+          content: chapterContent.trim(),
+        })
+
+        // Process nested items
+        if (item.items && item.items.length) {
+          await processOutline(item.items, level + 1)
+        }
+      }
+    }
+
+    if (outline && outline.length > 0) {
+      await processOutline(outline)
+    }
+
+    // Fallback: if no outline, split content into chunks
+    if (chapters.length === 0) {
+      const maxPreviewLength = 5000
+      const chunks = Array.from({ length: Math.ceil(fullText.length / maxPreviewLength) }, (_, i) =>
+        fullText.slice(i * maxPreviewLength, (i + 1) * maxPreviewLength)
+      )
+
+      chunks.forEach((chunk, index) => {
+        chapters.push({
+          id: `chapter-${index + 1}`,
+          title: `分块 ${index + 1}`,
+          content: chunk.trim(),
+        })
+      })
+    }    
 
     return {
-      text,
+      text: fullText,
       chapters,
       metadata: {
         fileName: file.name,
         fileType: "pdf",
         pageCount: pdf.numPages,
-        wordCount: text.length,
+        wordCount: fullText.length,
       },
     }
   } catch (error) {

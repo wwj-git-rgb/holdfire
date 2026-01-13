@@ -178,9 +178,7 @@ ${text}
     let currentText = inputText
 
     sortedFixes.forEach((fix) => {
-      if (currentText.substring(fix.start, fix.end) === fix.original) {
-        currentText = currentText.substring(0, fix.start) + fix.suggestion + currentText.substring(fix.end)
-      }
+      currentText = currentText.replaceAll(fix.original, fix.suggestion)
     })
 
     setInputText(currentText)

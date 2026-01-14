@@ -47,23 +47,17 @@ export function DiffAssistant() {
   const metadataFields = [
     { key: 'Make', label: '品牌', format: (v: any) => v },
     { key: 'Model', label: '型号', format: (v: any) => v },
-    { key: 'DateTimeOriginal', label: '拍摄时间', format: (v: any) => v ? new Date(v).toLocaleString() : '-' },
-    { key: 'ModifyDate', label: '修改时间', format: (v: any) => v ? new Date(v).toLocaleString() : '-' },
-    { key: 'ExifImageWidth', label: '分辨率', format: (v: any, meta: any) => meta?.ExifImageWidth && meta?.ExifImageHeight ? `${meta.ExifImageWidth} x ${meta.ExifImageHeight}` : '-' },
+    { key: 'DateTimeOriginal', label: '拍摄时间', format: (v: any) => v ? new Date(v).toLocaleString() : '' },
+    { key: 'ModifyDate', label: '修改时间', format: (v: any) => v ? new Date(v).toLocaleString() : '' },
+    { key: 'ExifImageWidth', label: '分辨率', format: (v: any, meta: any) => meta?.ExifImageWidth && meta?.ExifImageHeight ? `${meta.ExifImageWidth} x ${meta.ExifImageHeight}` : '' },
     { key: 'Orientation', label: '方向', format: (v: any) => v },
-    { key: 'Software', label: '软件', format: (v: any, meta: any) => v || meta?.CreatorTool || '-' },
+    { key: 'Software', label: '软件', format: (v: any, meta: any) => v || meta?.CreatorTool || '' },
   ]
 
   const showMetadata = useMemo(() => {
     const hasValue = (obj: any) => obj && Object.values(obj).length > 0
     return activeTab === 'image' && (hasValue(leftMetadata) || hasValue(rightMetadata))
   }, [leftMetadata, rightMetadata, activeTab])
-
-  const isDifferent = (left: any, right: any) => {
-    if (left === null || right === null) return false
-    if (left === undefined || right === undefined) return false
-    return String(left) !== String(right)
-  }
 
   const disabled = useMemo(() => inputLeft.length === 0 || inputRight.length === 0, [inputLeft, inputRight])
   const analyze = useMemo(() => ({
@@ -528,9 +522,9 @@ export function DiffAssistant() {
                       const rightValue = rightMetadata?.[field.key]
                       const leftDisplay = field.format(leftValue, leftMetadata)
                       const rightDisplay = field.format(rightValue, rightMetadata)
-                      const diff = isDifferent(leftValue, rightValue)
+                      const diff = leftValue !== rightValue
                       
-                      return (
+                      return (leftDisplay || rightDisplay) && (
                         <tr key={field.key} className={diff ? 'bg-red-50/50' : ''}>
                           <td className="p-3 text-muted-foreground">{field.label}</td>
                           <td className={`p-3 ${diff ? 'text-red-600 font-medium' : ''}`}>{leftDisplay}</td>

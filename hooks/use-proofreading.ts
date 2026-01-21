@@ -26,7 +26,7 @@ const DEFAULT_THESAURUS: ThesaurusGroup[] = [
   {
     id: "default",
     name: "默认",
-    enabled: true,
+    enabled: false,
     corrections: [{ original: "老师", suggestion: "教师" }],
   },
 ]

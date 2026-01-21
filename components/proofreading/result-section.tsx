@@ -93,6 +93,15 @@ export function ResultSection({
     })
   }
 
+  const onShowOriginalByIssueId = (id: number) => {
+    const element = document.getElementById(`issue-${id}`)
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" })
+      element.classList.add("animate-pulse")
+      setTimeout(() => element.classList.remove("animate-pulse"), 2000)
+    }
+  }
+
   useEffect(() => {    
     return () => {
       setShowDiff(false)
@@ -185,26 +194,6 @@ export function ResultSection({
           </div>
         )}
 
-        <div className={`relative flex items-start gap-4 ${showDiff ? "text-sm" : "text-base"}`}>
-          {showDiff && (
-            <IssueHighlight
-              inputText={originalData.inputText}
-              issues={originalData.issues}
-              activeCategory={activeCategory}
-              onAcceptSuggestion={onAcceptSuggestion}
-              onIgnoreSuggestion={onIgnoreSuggestion}
-            />
-          )}
-
-          <IssueHighlight
-            inputText={inputText}
-            issues={showIgnored ? issues : activeIssues}
-            activeCategory={activeCategory}
-            onAcceptSuggestion={onAcceptSuggestion}
-            onIgnoreSuggestion={onIgnoreSuggestion}
-          />
-        </div>
-
         {/* Issue List */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -226,12 +215,35 @@ export function ResultSection({
               ))}
             </TabsList>
           </Tabs>
+        </div>
 
-          <IssueList
-            issues={filteredIssues}
+        <IssueList
+          issues={filteredIssues}
+          onAcceptSuggestion={onAcceptSuggestion}
+          onIgnoreSuggestion={onIgnoreSuggestion}
+          onUnignoreSuggestion={onUnignoreSuggestion}
+          onShowOriginalByIssueId={onShowOriginalByIssueId}
+        />
+
+        <div className={`relative flex items-start gap-4 ${showDiff ? "text-sm" : "text-base"}`}>
+          {showDiff && (
+            <IssueHighlight
+              inputText={originalData.inputText}
+              issues={originalData.issues}
+              activeCategory={activeCategory}
+              onAcceptSuggestion={onAcceptSuggestion}
+              onIgnoreSuggestion={onIgnoreSuggestion}
+              onShowOriginalByIssueId={onShowOriginalByIssueId}
+            />
+          )}
+
+          <IssueHighlight
+            inputText={inputText}
+            issues={showIgnored ? issues : activeIssues}
+            activeCategory={activeCategory}
             onAcceptSuggestion={onAcceptSuggestion}
             onIgnoreSuggestion={onIgnoreSuggestion}
-            onUnignoreSuggestion={onUnignoreSuggestion}
+            onShowOriginalByIssueId={onShowOriginalByIssueId}
           />
         </div>
       </CardContent>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import type { Issue, IssueCategory } from "@/types/proofreading"
 import { Badge } from "@/components/ui/badge"
-import { Languages, BookOpen, Search } from "lucide-react"
+import { Languages, BookOpen, Search, ChevronLeft, ChevronRight } from "lucide-react"
 import eventBus from "@/lib/eventBus"
 
 interface IssueHighlightProps {
@@ -12,6 +12,7 @@ interface IssueHighlightProps {
   activeCategory: IssueCategory | "all"
   onAcceptSuggestion: (id: number) => void
   onIgnoreSuggestion: (id: number) => void
+  onShowOriginalByIssueId: (id: number) => void
 }
 
 export function IssueHighlight({
@@ -20,6 +21,7 @@ export function IssueHighlight({
   activeCategory,
   onAcceptSuggestion,
   onIgnoreSuggestion,
+  onShowOriginalByIssueId,
 }: IssueHighlightProps) {
   const [segments, setSegments] = useState(() => {
     if (issues.length === 0) {
@@ -152,7 +154,7 @@ export function IssueHighlight({
 
           const issue = segment.issue!
           return (
-            <span key={index} className={`relative group cursor-pointer ${getHighlightClass(issue)}`}>
+            <span id={`issue-${issue.id}`} key={index} className={`relative group cursor-pointer ${getHighlightClass(issue)}`}>
               {issue.fixed ? segment.content : segment.content ? segment.issue?.original : segment.content}
               {!issue.fixed && !issue.ignored && (
                 <div className="suggestion-popup absolute bottom-full mb-2 left-0 hidden group-hover:block group-active:block z-10 min-w-[250px] max-w-[400px]">
@@ -162,11 +164,17 @@ export function IssueHighlight({
                       建议修改为：<span className="font-medium text-green-500">{issue.suggestion}</span>
                     </div>
                     <div className="flex items-center gap-2">
+                      <Badge className="h-6 text-xs" variant="secondary" title="上一个" onClick={() => onShowOriginalByIssueId(issue.id - 1)}>
+                        <ChevronLeft className="w-4 h-4" />
+                      </Badge>
                       <Badge className="h-6 text-xs" onClick={() => onAcceptSuggestion(issue.id)}>
                         采纳
                       </Badge>
                       <Badge className="h-6 text-xs" variant="secondary" onClick={() => onIgnoreSuggestion(issue.id)}>
                         忽略
+                      </Badge>
+                      <Badge className="h-6 text-xs" variant="secondary" title="下一个" onClick={() => onShowOriginalByIssueId(issue.id + 1)}>
+                        <ChevronRight className="w-4 h-4" />
                       </Badge>
                     </div>
                   </div>

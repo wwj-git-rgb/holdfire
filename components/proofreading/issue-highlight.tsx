@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import type { Issue, IssueCategory } from "@/types/proofreading"
 import { Badge } from "@/components/ui/badge"
-import { Languages, BookOpen, Search, ChevronLeft, ChevronRight } from "lucide-react"
+import { Languages, BookOpen, Search, ChevronLeft, ChevronRight, List } from "lucide-react"
 import eventBus from "@/lib/eventBus"
 
 interface IssueHighlightProps {
@@ -96,6 +96,13 @@ export function IssueHighlight({
     }                                                                                                          
   };
 
+  const backIssueList = (issueId: number) => {
+    const issueElement = document.querySelector(`[data-issue-id="${issueId}"]`);
+    if (issueElement) {
+      issueElement.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
  useEffect(() => {
     const newSegments = segments.map((segment) => {
       if (segment.type === "text" || !segment.issue) return segment
@@ -164,17 +171,20 @@ export function IssueHighlight({
                       建议修改为：<span className="font-medium text-green-500">{issue.suggestion}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge className="h-6 text-xs" variant="secondary" title="上一个" onClick={() => onShowOriginalByIssueId(issue.id - 1)}>
-                        <ChevronLeft className="w-4 h-4" />
-                      </Badge>
                       <Badge className="h-6 text-xs" onClick={() => onAcceptSuggestion(issue.id)}>
                         采纳
                       </Badge>
                       <Badge className="h-6 text-xs" variant="secondary" onClick={() => onIgnoreSuggestion(issue.id)}>
                         忽略
                       </Badge>
+                      <Badge className="h-6 text-xs" variant="secondary" title="上一个" onClick={() => onShowOriginalByIssueId(issue.id - 1)}>
+                        <ChevronLeft className="w-4 h-4" />
+                      </Badge>
                       <Badge className="h-6 text-xs" variant="secondary" title="下一个" onClick={() => onShowOriginalByIssueId(issue.id + 1)}>
                         <ChevronRight className="w-4 h-4" />
+                      </Badge>
+                      <Badge className="h-6 text-xs" variant="secondary" title="回到列表" onClick={() => backIssueList(issue.id)}>
+                        <List className="w-4 h-4" />
                       </Badge>
                     </div>
                   </div>

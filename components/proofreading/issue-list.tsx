@@ -50,12 +50,13 @@ export function IssueList({
           return (
             <div
               key={issue.id}
+              data-issue-id={issue.id}
               className={`p-4 hover:bg-muted/50 transition-colors cursor-pointer ${
                 issue.fixed ? "bg-green-500/5" : issue.ignored ? "bg-muted/30" : ""
               }`}
             >
-              <div className="flex items-start gap-3">
-                <Badge variant="outline" className={`${style.bg} ${style.text} ${style.border} border w-[65px] hidden md:block`}>
+              <div className="flex flex-col md:flex-row items-start gap-3">
+                <Badge variant="outline" className={`${style.bg} ${style.text} ${style.border} border w-[65px]`}>
                   {issue.ignored ? "已忽略" : issue.category}
                 </Badge>
 

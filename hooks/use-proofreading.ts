@@ -183,14 +183,16 @@ ${text}
 
     setInputText(currentText)
     setIssues((prev) => 
-      prev.map((issue) => 
-        fixesToApply.some((fix) => fix.id === issue.id) ? { ...issue, fixed: true } : issue
-      )
+      prev.map((issue) =>  {
+        const item = fixesToApply.find((fix) => fix.id === issue.id)
+
+        return item ? { ...item, fixed: true } : issue
+      })
     )
   }
 
-  const acceptSuggestion = (id: number) => {
-    const issueToFix = issues.find((i) => i.id === id && !i.fixed)
+  const acceptSuggestion = (id: number, issue?: Issue) => {
+    const issueToFix = issue || issues.find((i) => i.id === id && !i.fixed)
     if (issueToFix) applyFixesToInputText([issueToFix])
   }
 

@@ -365,7 +365,7 @@ export function InputSection({
 
           <div className="flex items-center justify-center py-15">
             <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
-            <span className="text-gray-600">正在校对中，请稍候{wordCount ? `(${wordCount})` : "..."}</span>
+            <span className="text-gray-600">正在校对中，{wordCount ? `已完成：${wordCount}` : "请稍候..."}</span>
           </div>
         </div>
       )}

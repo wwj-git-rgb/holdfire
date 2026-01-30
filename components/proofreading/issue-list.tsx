@@ -66,14 +66,11 @@ export function IssueList({
                   >
                     {issue.reason}
                   </p>
-                  <div className="flex items-center gap-2 text-xs">
-                    <span
-                      className={`line-through ${issue.fixed || issue.ignored ? "text-muted-foreground" : "text-foreground/70"}`}
-                    >
+                  <div className="flex flex-col text-xs">
+                    <span className="font-medium text-green-500">{issue.suggestion}</span>
+                    <span className={`line-through ${issue.fixed || issue.ignored ? "text-muted-foreground" : "text-foreground/70"}`}>
                       {issue.original}
                     </span>
-                    <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                    <span className="font-medium text-green-500">{issue.suggestion}</span>
                   </div>
                 </div>
 

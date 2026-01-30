@@ -3,14 +3,14 @@
 import { useState, useEffect, useRef } from "react"
 import type { Issue, IssueCategory } from "@/types/proofreading"
 import { Badge } from "@/components/ui/badge"
-import { Languages, BookOpen, Search, ChevronLeft, ChevronRight, List } from "lucide-react"
+import { Languages, BookOpen, Search, ChevronLeft, ChevronRight, List, Check } from "lucide-react"
 import eventBus from "@/lib/eventBus"
 
 interface IssueHighlightProps {
   inputText: string
   issues: Issue[]
   activeCategory: IssueCategory | "all"
-  onAcceptSuggestion: (id: number) => void
+  onAcceptSuggestion: (id: number, issue?: Issue) => void
   onIgnoreSuggestion: (id: number) => void
   onShowOriginalByIssueId: (id: number) => void
 }
@@ -76,6 +76,9 @@ export function IssueHighlight({
 
   const resultAreaRef = useRef<HTMLDivElement>(null)
   const [searchPopup, setSearchPopup] = useState<{ visible: boolean; x: number; y: number; text: string } | null>(null);
+  const [editingIssueId, setEditingIssueId] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState("");
+
   const handleTextSelection = () => {                                                                
     const selection = window.getSelection();                                                                   
     const selectedText = selection?.toString().trim();                                                         
@@ -103,15 +106,21 @@ export function IssueHighlight({
     }
   };
 
+  const startEditSuggestion = (issue: Issue, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingIssueId(issue.id);
+    setEditValue(issue.suggestion);
+  };
+
  useEffect(() => {
     const newSegments = segments.map((segment) => {
       if (segment.type === "text" || !segment.issue) return segment
 
       const targetIssue = issues.find((item) => item.id === segment.issue?.id)
       if (targetIssue) {
-        return { ...segment, content: segment.issue.suggestion, issue: targetIssue }
+        return { ...segment, content: targetIssue.suggestion, issue: targetIssue }
       }
-    })
+    })    
     setSegments(newSegments as typeof segments)
   }, [issues]);
 
@@ -167,11 +176,29 @@ export function IssueHighlight({
                 <div className="suggestion-popup absolute bottom-full mb-2 left-0 hidden group-hover:block group-active:block z-10 min-w-[250px] max-w-[400px]">
                   <div className="bg-popover border border-border rounded-lg shadow-lg p-3">
                     <div className="text-xs font-medium text-destructive mb-1">问题：{issue.reason}</div>
-                    <div className="text-xs mb-2">
-                      建议修改为：<span className="font-medium text-green-500">{issue.suggestion}</span>
-                    </div>
+                      <div className="text-xs mb-2 space-y-2">
+                        {editingIssueId === issue.id ? (
+                          <div className="space-y-2 relative">
+                            <textarea 
+                              value={editValue} 
+                              onChange={(e) => setEditValue(e.target.value)}
+                              className="w-full p-2 border border-border rounded-md text-xs resize-none"
+                              rows={3}
+                              autoFocus
+                            />
+                          </div>
+                        ) : (
+                          <span 
+                            className="font-medium text-green-500 cursor-pointer hover:opacity-70" 
+                            onClick={(e) => startEditSuggestion(issue, e)}
+                            title="点击修改建议"
+                          >
+                            建议：{issue.suggestion}
+                          </span>
+                        )}
+                      </div>
                     <div className="flex items-center gap-2">
-                      <Badge className="h-6 text-xs" onClick={() => onAcceptSuggestion(issue.id)}>
+                      <Badge className="h-6 text-xs" onClick={() => onAcceptSuggestion(issue.id, { ...issue, suggestion: editValue })}>
                         采纳
                       </Badge>
                       <Badge className="h-6 text-xs" variant="secondary" onClick={() => onIgnoreSuggestion(issue.id)}>

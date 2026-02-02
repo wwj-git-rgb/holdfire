@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import type { Issue, IssueCategory } from "@/types/proofreading"
 import { Badge } from "@/components/ui/badge"
-import { Languages, BookOpen, Search, ChevronLeft, ChevronRight, List, Check } from "lucide-react"
+import { Languages, BookOpen, Search, ChevronLeft, ChevronRight, List } from "lucide-react"
 import eventBus from "@/lib/eventBus"
 
 interface IssueHighlightProps {
@@ -178,15 +178,13 @@ export function IssueHighlight({
                     <div className="text-xs font-medium text-destructive mb-1">问题：{issue.reason}</div>
                       <div className="text-xs mb-2 space-y-2">
                         {editingIssueId === issue.id ? (
-                          <div className="space-y-2 relative">
-                            <textarea 
-                              value={editValue} 
-                              onChange={(e) => setEditValue(e.target.value)}
-                              className="w-full p-2 border border-border rounded-md text-xs resize-none"
-                              rows={3}
-                              autoFocus
-                            />
-                          </div>
+                          <textarea 
+                            value={editValue} 
+                            onChange={(e) => setEditValue(e.target.value)}
+                            className="w-full p-2 border border-border rounded-md text-xs resize-none"
+                            rows={3}
+                            autoFocus
+                          />
                         ) : (
                           <span 
                             className="font-medium text-green-500 cursor-pointer hover:opacity-70" 
@@ -198,7 +196,7 @@ export function IssueHighlight({
                         )}
                       </div>
                     <div className="flex items-center gap-2">
-                      <Badge className="h-6 text-xs" onClick={() => onAcceptSuggestion(issue.id, { ...issue, suggestion: editValue })}>
+                      <Badge className="h-6 text-xs" onClick={() => onAcceptSuggestion(issue.id, { ...issue, suggestion: editingIssueId ? editValue : issue.suggestion })}>
                         采纳
                       </Badge>
                       <Badge className="h-6 text-xs" variant="secondary" onClick={() => onIgnoreSuggestion(issue.id)}>

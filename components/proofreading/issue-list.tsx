@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Eye, Check, X, Undo2, CheckCircle2 } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { TextOutput } from "../different/text-output"
-import { generateDiffMarkup } from "@/lib/utils"
+import { DiffItem, generateDiffMarkup } from "@/lib/utils"
 
 interface IssueListProps {
   issues: Issue[]
@@ -36,8 +36,11 @@ export function IssueList({
     return a.start - b.start
   })
 
-  const [editingIssueId, setEditingIssueId] = useState<number | null>(null)
   const [editValue, setEditValue] = useState("")
+  const [editingIssueId, setEditingIssueId] = useState<number | null>(null)
+  const replaceDelContent = (diff: DiffItem[]) => diff.map(item => {
+    return { ...item, content: item.type !== 'del' ? item.content : ' ' }
+  })
 
   const startEditSuggestion = (issue: Issue, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -72,7 +75,7 @@ export function IssueList({
                   {issue.ignored ? "已忽略" : issue.category}
                 </Badge>
 
-                <div className="flex-1">
+                <div className="flex-1 w-full">
                   <p
                     className={`text-sm mb-2 ${issue.fixed || issue.ignored ? "text-muted-foreground" : "text-destructive"}`}
                   >
@@ -83,7 +86,7 @@ export function IssueList({
                     {issue.ignored && <span className="text-muted-foreground text-foreground/70">{issue.original}</span>}
                     {issue.fixed === issue.ignored ? editingIssueId === issue.id 
                       ? <textarea value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-full p-2 border border-border rounded-md text-xs resize-none" rows={3} autoFocus /> 
-                      : <TextOutput className="min-h-[auto]" diff={generateDiffMarkup(issue.suggestion, issue.original)} onClick={(e) => startEditSuggestion(issue, e)} /> : null
+                      : <TextOutput className="min-h-[auto]" diff={replaceDelContent(generateDiffMarkup(issue.suggestion, issue.original))} onClick={(e) => startEditSuggestion(issue, e)} /> : null
                     }
                   </div>
                 </div>

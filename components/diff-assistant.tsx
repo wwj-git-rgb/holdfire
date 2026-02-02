@@ -81,8 +81,7 @@ export function DiffAssistant() {
     const leftDiff = generateDiffMarkup(inputLeft, inputRight)
     const rightDiff = generateDiffMarkup(inputRight, inputLeft)
     const replaceDelContent = (diff: DiffItem[]) => diff.map(item => {
-      if (item.type !== 'del') { return item }
-      return { ...item, content: ' ' }
+      return { ...item, content: item.type !== 'del' ? item.content : ' ' }
     })
 
     await delay(500)

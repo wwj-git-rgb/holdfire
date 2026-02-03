@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react"
 import type { Issue, IssueCategory } from "@/types/proofreading"
 import { Badge } from "@/components/ui/badge"
 import { Languages, BookOpen, Search, ChevronLeft, ChevronRight, List } from "lucide-react"
+import { TextOutput } from "../different/text-output"
+import { DiffItem, generateDiffMarkup } from "@/lib/utils"
 import eventBus from "@/lib/eventBus"
 
 interface IssueHighlightProps {
@@ -112,6 +114,10 @@ export function IssueHighlight({
     setEditValue(issue.suggestion);
   };
 
+  const replaceDelContent = (diff: DiffItem[]) => diff.map(item => {
+    return { ...item, content: item.type !== 'del' ? item.content : ' ' }
+  })
+
  useEffect(() => {
     const newSegments = segments.map((segment) => {
       if (segment.type === "text" || !segment.issue) return segment
@@ -175,7 +181,7 @@ export function IssueHighlight({
               {!issue.fixed && !issue.ignored && (
                 <div className="suggestion-popup absolute bottom-full mb-2 left-0 hidden group-hover:block group-active:block z-10 min-w-[250px] max-w-[400px]">
                   <div className="bg-popover border border-border rounded-lg shadow-lg p-3">
-                    <div className="text-xs font-medium text-destructive mb-1">问题：{issue.reason}</div>
+                    <div className="text-xs font-medium text-destructive mb-1 leading-relaxed">{issue.reason}</div>
                       <div className="text-xs mb-2 space-y-2">
                         {editingIssueId === issue.id ? (
                           <textarea 
@@ -187,11 +193,11 @@ export function IssueHighlight({
                           />
                         ) : (
                           <span 
-                            className="font-medium text-green-500 cursor-pointer hover:opacity-70" 
+                            className="cursor-pointer hover:opacity-70 text-xs" 
                             onClick={(e) => startEditSuggestion(issue, e)}
                             title="点击修改建议"
                           >
-                            建议：{issue.suggestion}
+                            <TextOutput className="min-h-[auto] leading-relaxed" diff={replaceDelContent(generateDiffMarkup(issue.suggestion, issue.original))} />
                           </span>
                         )}
                       </div>

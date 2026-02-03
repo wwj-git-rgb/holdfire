@@ -60,11 +60,12 @@ export function DiffAssistant() {
   }, [leftMetadata, rightMetadata, activeTab])
 
   const disabled = useMemo(() => inputLeft.length === 0 || inputRight.length === 0, [inputLeft, inputRight])
-  const analyze = useMemo(() => ({
-    update: rightDiff.filter(item => item.type === 'update').length,
-    add: leftDiff.concat(rightDiff).filter(item => item.type === 'add').length,
-    result: leftDiff.concat(rightDiff).length,
-  }), [leftDiff, rightDiff])
+  const analyze = useMemo(() => {
+    const update = rightDiff.filter(item => item.type === 'update').length 
+    const add = rightDiff.filter(item => item.type === 'del').length
+
+    return { update, add, result: update + add }
+  }, [rightDiff])
   const similarity = useMemo(() => {    
     const commonTextLength = leftDiff
       .filter(item => item.type === 'text')

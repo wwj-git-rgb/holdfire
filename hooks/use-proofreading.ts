@@ -126,24 +126,19 @@ ${text}
       const parsedIssues: Issue[] = jsonRepairSafe(content)
       const processedIssues = parsedIssues.map((item) => {
         const start = inputText.indexOf(item.original, currentOffset)
-        const issue = {
+        const isFound = start !== -1
+
+        if (isFound) currentOffset = start + 1
+
+        return {
           ...item,
           id: issueIdCounter++,
           fixed: false,
-          start: 0,
-          end: 0,
           category: item.category || "语法错误",
-          ignored: true,
+          start: isFound ? start : 0,
+          end: isFound ? start + item.original.length : 0,
+          ignored: !isFound,
         }
-        if (start !== -1) {
-          const end = start + item.original.length
-          issue.start = start
-          issue.end = end
-          issue.ignored = false
-          currentOffset = start + 1
-        }
-
-        return issue
       })
 
       setIssues(processedIssues.sort((a, b) => a.start - b.start))

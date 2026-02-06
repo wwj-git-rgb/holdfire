@@ -3,7 +3,7 @@
 import { useState } from "react"
 import type { Issue } from "@/types/proofreading"
 import { Badge } from "@/components/ui/badge"
-import { Eye, Check, X, Undo2, CheckCircle2, Copy } from "lucide-react"
+import { Eye, Check, X, Undo2, CheckCircle2, CornerRightDown } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { TextOutput } from "../different/text-output"
 import { DiffItem, generateDiffMarkup } from "@/lib/utils"
@@ -89,7 +89,7 @@ export function IssueList({
                   <div className="flex flex-col text-xs leading-relaxed">
                     <p className="text-xs text-muted-foreground opacity-50 leading-relaxed">
                       {issue.original}
-                      {editingIssueId === issue.id && <Copy className="h-3 w-3 text-gray-400 hover:text-gray-600 cursor-pointer ml-1 inline" onClick={() => navigator.clipboard.writeText(issue.original)} />}
+                      {editingIssueId === issue.id && <span title="修改原文" className="cursor-pointer ml-1" onClick={() => setEditValue(issue.original)}><CornerRightDown className="h-3 w-3 text-gray-400 hover:text-gray-600 inline" /></span>}
                     </p>
                     {issue.fixed && <span className="font-medium text-green-500">{issue.suggestion}</span>}
                     {issue.fixed === issue.ignored ? editingIssueId === issue.id 

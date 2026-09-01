@@ -73,7 +73,7 @@ export function InputSection({
 
   const maxPreviewLength = 5000
   const placeholder = `在此处粘贴您的文章内容，或者复制链接地址，推荐字符数在${maxPreviewLength}字以内，超过${maxPreviewLength}字将分块处理`
-  const validExtensions = ".png,.jpg,.jpeg,.txt,.md,.markdown,.docx,.pdf"
+  const validExtensions = ".png,.jpg,.jpeg,.txt,.md,.markdown,.docx,.doc,.odt,.pdf,.ppt,.pptx,.rtf,.epub,.xlsx,.ods,.odp,.csv"
   const validExtensionsList = validExtensions.split(",").map((ext) => ext.slice(1).toUpperCase()).join(" ") 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -288,7 +288,7 @@ export function InputSection({
               <div className="text-muted-foreground">
                 <Upload className="h-8 w-8 mx-auto mb-2" />
                 <p>点击或拖拽文件到此处</p>
-                <p className="text-xs mt-1">支持图片、文本、WORD、PDF 格式</p>
+                <p className="text-xs mt-1">支持图片、文本、Word、PDF、PPT等格式</p>
               </div>
             ) : (
               <div className="flex items-center justify-center gap-2">

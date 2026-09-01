@@ -103,7 +103,7 @@ export function ConfigPanel({ authCode, open, onOpenChange, config, onSave, onRe
                 onChange={(e) => setTempConfig({ ...tempConfig, apiUrl: e.target.value })}
                 placeholder="https://api.example.com/v1/chat/completions"
               />
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 bg-muted p-2 rounded-md">
                 <Checkbox
                   id="useProxy"
                   checked={tempConfig.useProxy}

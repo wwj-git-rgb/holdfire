@@ -43,6 +43,7 @@ export default async function fetchSSE(config: fetchSSEParams) {
             include_usage: true,
             add_generation_prompt: true,
             enable_thinking: false,
+            // reasoning_effort: "low",
             temperature: 0.1
         }),
         signal,

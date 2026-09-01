@@ -106,14 +106,14 @@ export function TextInput({ config, inputText, setInputText }: InputSectionProps
                 <input
                     ref={fileInputRef}
                     type="file"
-                    accept="accept/*"
+                    accept=".png,.jpg,.jpeg,.txt,.md,.markdown,.docx,.doc,.odt,.pdf,.ppt,.pptx,.rtf,.epub,.xlsx,.ods,.odp,.csv"
                     className="hidden"
                     onChange={handleFileUpload}
                 />
                 {!uploadedFile ? (
                     <div className="text-muted-foreground">
                         <p>点击或拖拽文件到此处</p>
-                        <p className="text-xs mt-1">支持图片、文本、WORD、PDF 格式</p>
+                        <p className="text-xs mt-1">支持图片、文本、Word、PDF、PPT、Excel、EPUB 等格式</p>
                     </div>
                 ) : (
                     <div className="flex items-center justify-center gap-2">

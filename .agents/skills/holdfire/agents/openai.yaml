@@ -1,0 +1,6 @@
+interface:
+  display_name: "Holdfire"
+  short_description: "Repo-specific patterns and workflows for holdfire"
+  default_prompt: "Use the holdfire repo skill to follow existing architecture, testing, and workflow conventions."
+policy:
+  allow_implicit_invocation: true

@@ -176,6 +176,13 @@ const extractChapters = (text: string): Chapter[] => {
   let currentChapter: Chapter | null = null
   let currentContent = ""
 
+  chapters.push({
+    id: "full-text",
+    title: "全文",
+    level: 1,
+    content: text,
+  })
+
   for (const line of lines) {
     const headingMatch = line.match(/^(#{1,6})\s+(.+)$/)
 

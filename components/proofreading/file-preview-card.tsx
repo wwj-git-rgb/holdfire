@@ -3,12 +3,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Badge } from "@/components/ui/badge"
 import { FileText, List, Loader2, Download } from "lucide-react"
 import type { ParsedFile, Chapter } from "@/lib/file-parser"
 import { useState, useEffect, useRef } from "react"
 import { exportByBlob } from "@/lib/utils"
 import Markdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 interface FilePreviewCardProps {
   open: boolean
@@ -79,16 +79,8 @@ export function FilePreviewCard({ open, file, onConfirm, onTransfer }: FilePrevi
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* File metadata */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="secondary">{file.metadata.fileName}</Badge>
-            <Badge variant="outline">{file.metadata.fileType.toUpperCase()}</Badge>
-            <Badge variant="outline">{file.metadata.wordCount} 字符</Badge>
-            {file.metadata.pageCount && <Badge variant="outline">{file.metadata.pageCount} 页</Badge>}
-          </div>
-
           {/* Two-column layout for chapters and content */}
-          <div className="flex gap-4 h-[400px]">
+          <div className="flex gap-4 h-[500px]">
             {/* Left column - Chapter navigation */}
             <div className="w-1/4 flex flex-col border rounded-md">
               <div className="p-3 border-b bg-muted/30 flex items-center gap-2">
@@ -129,6 +121,7 @@ export function FilePreviewCard({ open, file, onConfirm, onTransfer }: FilePrevi
                 <div ref={previewRef} className="prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed">
                   {selectedChapter?.content ? (
                     <Markdown
+                      remarkPlugins={[remarkGfm]}
                       components={{
                         h1: ({ children }) => <h1 className="text-xl font-bold mt-4 mb-2">{children}</h1>,
                         h2: ({ children }) => <h2 className="text-lg font-bold mt-3 mb-2">{children}</h2>,
@@ -136,7 +129,7 @@ export function FilePreviewCard({ open, file, onConfirm, onTransfer }: FilePrevi
                         h4: ({ children }) => <h4 className="text-sm font-semibold mt-2 mb-1">{children}</h4>,
                         h5: ({ children }) => <h5 className="text-sm font-medium mt-2 mb-1">{children}</h5>,
                         h6: ({ children }) => <h6 className="text-sm font-medium mt-2 mb-1">{children}</h6>,
-                        p: ({ children }) => <p className="mb-2">{children}</p>,
+                        p: ({ children }) => <p className="mb-2 whitespace-pre-wrap">{children}</p>,
                         ul: ({ children }) => <ul className="list-disc pl-5 mb-2">{children}</ul>,
                         ol: ({ children }) => <ol className="list-decimal pl-5 mb-2">{children}</ol>,
                         li: ({ children }) => <li className="mb-0.5">{children}</li>,

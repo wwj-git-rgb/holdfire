@@ -3,9 +3,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { FileText, List, Loader2, Download } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import { FileText, List, Download } from "lucide-react"
 import type { ParsedFile, Chapter } from "@/lib/file-parser"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { exportByBlob } from "@/lib/utils"
 import Markdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -19,10 +21,14 @@ interface FilePreviewCardProps {
 
 export function FilePreviewCard({ open, file, onConfirm, onTransfer }: FilePreviewCardProps) {
   const previewRef = useRef<HTMLDivElement>(null)
-  const [isTransferring, setIsTransferring] = useState(false)
   const [chapters, setChapters] = useState<Chapter[]>([])
+  const [isPlainText, setIsPlainText] = useState(false)
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null)
   const [activeChapterId, setActiveChapterId] = useState<string | null>(null)
+
+  const selectedChapterContent = useMemo(() => {
+    return (isPlainText ? previewRef.current?.innerText : selectedChapter?.content) || ''
+  }, [isPlainText, selectedChapter])
 
   useEffect(() => {
     if (file) {
@@ -45,18 +51,8 @@ export function FilePreviewCard({ open, file, onConfirm, onTransfer }: FilePrevi
     }
   }, [file])
 
-  const onTransferFile = () => {
-    const innerText = previewRef.current?.innerText || ""
-
-    setIsTransferring(true)
-    onTransfer(innerText).finally(() => {
-      setIsTransferring(false)
-    })
-  }
-
   const exportText = () => {
-    const innerText = previewRef.current?.innerText || ""
-    const blob = new Blob([innerText], { type: "text/plain" })
+    const blob = new Blob([selectedChapterContent], { type: "text/plain" })
     const url = URL.createObjectURL(blob)
     const fileName = `${file?.metadata.fileName.trim()}.md`
 
@@ -173,25 +169,22 @@ export function FilePreviewCard({ open, file, onConfirm, onTransfer }: FilePrevi
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-2">
-            {file.metadata.fileType !== "md" && (
-              <Button onClick={onTransferFile} disabled={isTransferring} className="disabled:opacity-50">
-                {isTransferring ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 转换中...
-                  </>
-                ) : (
-                  "转 Markdown"
-                )}
-              </Button>
-            )}
+          <div className="flex justify-end gap-4">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="useProxy"
+                checked={isPlainText}
+                onCheckedChange={() => setIsPlainText(!isPlainText)}
+              />
+              <Label htmlFor="useProxy" className="cursor-pointer text-sm">纯文本</Label>
+            </div>
 
             <Button
               onClick={() => {
-                onConfirm(previewRef.current?.innerText || "")
+                onConfirm(selectedChapterContent)
               }}
             >
-              选择当前文本
+              选择当前
             </Button>
           </div>
         </div>

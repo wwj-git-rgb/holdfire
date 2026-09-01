@@ -25,8 +25,9 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3)
 export default async function fetchSSE(config: fetchSSEParams) {
     const startTime = new Date();
     const signal = (config.controller || new AbortController()).signal
+    const requestUrl = config.useProxy ? `/api/proxy?url=${encodeURIComponent(config.apiUrl)}` : config.apiUrl;
 
-    const response = await fetchWithRetry(config.apiUrl, {
+    const response = await fetchWithRetry(requestUrl, {
         method: "POST",
         headers: {
             Authorization: `Bearer ${config.apiKey}`,
@@ -40,6 +41,8 @@ export default async function fetchSSE(config: fetchSSEParams) {
             ],
             stream: true,
             include_usage: true,
+            add_generation_prompt: true,
+            enable_thinking: false,
             temperature: 0.1
         }),
         signal,

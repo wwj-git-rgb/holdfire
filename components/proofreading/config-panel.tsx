@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import type { ProofreadingConfig } from "@/types/proofreading"
 import { Save, RotateCcw, Lock, Eye, EyeClosed } from "lucide-react"
 import { DEFAULT_CONFIG } from "@/hooks/use-proofreading"
@@ -34,7 +35,8 @@ export function ConfigPanel({ authCode, open, onOpenChange, config, onSave, onRe
     try {
       setIsLoading(true);
       const [modelUrl] = tempConfig.apiUrl.split('/chat');
-      const response = await fetch(`${modelUrl}/models`, {
+      const requestUrl = tempConfig.useProxy ? `/api/proxy?url=${encodeURIComponent(modelUrl)}` : `${modelUrl}/models`;
+      const response = await fetch(requestUrl, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${tempConfig.apiKey}`,
@@ -93,12 +95,23 @@ export function ConfigPanel({ authCode, open, onOpenChange, config, onSave, onRe
         <div className="space-y-6 py-4">
           <div className="space-y-2">
             <Label htmlFor="apiUrl">API URL</Label>
-            <Input
-              id="apiUrl"
-              value={tempConfig.apiUrl}
-              onChange={(e) => setTempConfig({ ...tempConfig, apiUrl: e.target.value })}
-              placeholder="https://api.example.com/v1/chat/completions"
-            />
+            <div className="flex gap-2">
+              <Input
+                id="apiUrl"
+                className="flex-1"
+                value={tempConfig.apiUrl}
+                onChange={(e) => setTempConfig({ ...tempConfig, apiUrl: e.target.value })}
+                placeholder="https://api.example.com/v1/chat/completions"
+              />
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="useProxy"
+                  checked={tempConfig.useProxy}
+                  onCheckedChange={(checked) => setTempConfig({ ...tempConfig, useProxy: checked === true })}
+                />
+                <Label htmlFor="useProxy">本地代理</Label>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-2">

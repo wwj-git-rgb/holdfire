@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { ProofreadingConfig } from "@/types/proofreading"
-import { Save, RotateCcw, Lock, Eye, EyeClosed, AlertCircle, HeartCrack } from "lucide-react"
+import { Save, RotateCcw, Lock, Eye, EyeClosed, AlertCircle, HeartCrack, Lightbulb } from "lucide-react"
 import { DEFAULT_CONFIG } from "@/hooks/use-proofreading"
 import { useLocalStorage } from "@/hooks/use-localStorage"
 import { usePrompt } from "@/components/prompt-provider"
@@ -28,6 +28,7 @@ export function ConfigPanel({ authCode, open, onOpenChange, config, onSave, onRe
   const [tempConfig, setTempConfig] = useState({ ...config });
   const [keyVisible, setKeyVisible] = useState(false)
   const [availableModels, setAvailableModels] = useLocalStorage<string[]>('availableModels', []);
+  const [openReasoningModels, setOpenReasoningModels] = useState<string[]>([]);
   const [modelFilterOpen, setModelFilterOpen] = useState(false);
   const [modelFilter, setModelFilter] = useState("");
   const { showPrompt } = usePrompt();
@@ -79,6 +80,7 @@ export function ConfigPanel({ authCode, open, onOpenChange, config, onSave, onRe
       if (res.data) {
         const models = res.data.map((m: Record<string, unknown>) => m.id || m.root || "");
         setAvailableModels(models);
+        fetchOpenModels(models);
         if (models.length > 0 && !models.includes(tempConfig.model)) {
           setTempConfig({ ...tempConfig, model: models[0] });
         }
@@ -87,6 +89,26 @@ export function ConfigPanel({ authCode, open, onOpenChange, config, onSave, onRe
       console.error('获取模型列表失败:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const extractModelName = (model: string) => model.split('/').pop()?.toLowerCase() || '';
+
+  const fetchOpenModels = async (models: string[]) => {
+    if (!models.length) return;
+    try {
+      const targetModelNames = new Set(models.map(extractModelName));
+      const response = await fetch('https://openrouter.ai/api/v1/models');
+      if (!response.ok) throw new Error('无法获取模型列表');
+
+      const res = await response.json();
+      if (res.data) {
+        const reasoningModels = res.data.filter((m: any) => m.reasoning).map((m: any) => extractModelName(String(m.id)));
+        const intersection = reasoningModels.filter((model: string) => targetModelNames.has(model));
+        setOpenReasoningModels(intersection);
+      }
+    } catch (error) {
+      console.error('获取模型列表失败:', error);
     }
   };
 
@@ -229,13 +251,14 @@ export function ConfigPanel({ authCode, open, onOpenChange, config, onSave, onRe
                       filteredModels.map((model) => (
                         <div
                           key={model}
-                          className="cursor-pointer px-3 py-2 text-sm hover:bg-accent"
+                          className="flex items-center gap-2 cursor-pointer px-3 py-2 text-sm hover:bg-accent"
                           onClick={() => {
                             setTempConfig({ ...tempConfig, model });
                             setModelFilterOpen(false);
                           }}
                         >
                           {model}
+                          {openReasoningModels.includes(extractModelName(model)) && <Lightbulb className="inline h-3 w-3" />}
                         </div>
                       ))
                     ) : (

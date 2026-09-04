@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { ProofreadingConfig } from "@/types/proofreading"
-import { Save, RotateCcw, Lock, Eye, EyeClosed, AlertCircle } from "lucide-react"
+import { Save, RotateCcw, Lock, Eye, EyeClosed, AlertCircle, HeartCrack } from "lucide-react"
 import { DEFAULT_CONFIG } from "@/hooks/use-proofreading"
 import { useLocalStorage } from "@/hooks/use-localStorage"
 import { usePrompt } from "@/components/prompt-provider"
@@ -33,6 +33,7 @@ export function ConfigPanel({ authCode, open, onOpenChange, config, onSave, onRe
   const { showPrompt } = usePrompt();
   const [customPromptVisible, setcustomPromptVisible] = useState(false);
   const [customBodyError, setCustomBodyError] = useState<string | null>(null);
+  const [detectError, setDetectError] = useState<string | null>(null);
 
   const TEMPLATE_BODY = `{"enable_thinking": true, "reasoning_effort": "low", "temperature": 0.1}`;
 
@@ -63,7 +64,8 @@ export function ConfigPanel({ authCode, open, onOpenChange, config, onSave, onRe
     try {
       setIsLoading(true);
       const [modelUrl] = tempConfig.apiUrl.split('/chat');
-      const requestUrl = tempConfig.useProxy ? `/api/proxy?url=${encodeURIComponent(modelUrl)}` : `${modelUrl}/models`;
+      const modelsUrl = modelUrl + '/models';
+      const requestUrl = tempConfig.useProxy ? `/api/proxy?url=${encodeURIComponent(modelsUrl)}` : modelsUrl;
       const response = await fetch(requestUrl, {
         headers: {
           'Content-Type': 'application/json',
@@ -107,6 +109,38 @@ export function ConfigPanel({ authCode, open, onOpenChange, config, onSave, onRe
       setIsLoading(false);
     }
   }
+
+  const handleDetect = async () => {
+    if (isLoading) return;
+    setDetectError(null);
+    setIsLoading(true);
+    try {
+      const requestUrl = tempConfig.useProxy ? `/api/proxy?url=${encodeURIComponent(tempConfig.apiUrl)}` : tempConfig.apiUrl;
+      const response = await fetch(requestUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tempConfig.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: tempConfig.model,
+          messages: [{ role: 'user', content: 'hi' }],
+          max_tokens: 1,
+        }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `请求失败: ${response.status}`);
+      }
+      await response.json();
+      setDetectError('成功');
+    } catch (error: any) {
+      setDetectError(error.message);
+      return;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (authCode) handleAuthAdmin()
@@ -319,7 +353,15 @@ export function ConfigPanel({ authCode, open, onOpenChange, config, onSave, onRe
               }}
             >
               <RotateCcw className="h-4 w-4" />
-              恢复默认
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleDetect}
+              disabled={isLoading}
+              className="disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <HeartCrack className="h-4 w-4" />
+              检测{detectError}
             </Button>
             <Button
               onClick={() => {

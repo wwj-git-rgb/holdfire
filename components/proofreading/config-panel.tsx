@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { ProofreadingConfig } from "@/types/proofreading"
-import { Save, RotateCcw, Lock, Eye, EyeClosed } from "lucide-react"
+import { Save, RotateCcw, Lock, Eye, EyeClosed, AlertCircle } from "lucide-react"
 import { DEFAULT_CONFIG } from "@/hooks/use-proofreading"
 import { useLocalStorage } from "@/hooks/use-localStorage"
 import { usePrompt } from "@/components/prompt-provider"
+import { defaultRequest } from "@/lib/fetchSSE"
 
 interface ConfigPanelProps {
   authCode?: string
@@ -28,7 +28,35 @@ export function ConfigPanel({ authCode, open, onOpenChange, config, onSave, onRe
   const [tempConfig, setTempConfig] = useState({ ...config });
   const [keyVisible, setKeyVisible] = useState(false)
   const [availableModels, setAvailableModels] = useLocalStorage<string[]>('availableModels', []);
+  const [modelFilterOpen, setModelFilterOpen] = useState(false);
+  const [modelFilter, setModelFilter] = useState("");
   const { showPrompt } = usePrompt();
+  const [customPromptVisible, setcustomPromptVisible] = useState(false);
+  const [customBodyError, setCustomBodyError] = useState<string | null>(null);
+
+  const TEMPLATE_BODY = `{"enable_thinking": true, "reasoning_effort": "low", "temperature": 0.1}`;
+
+  const handleFillTemplate = () => {
+    setTempConfig({ ...tempConfig, customRequestBody: TEMPLATE_BODY });
+    setCustomBodyError(null);
+  };
+
+  const handleValidateJson = () => {
+    if (!tempConfig.customRequestBody.trim()) {
+      setCustomBodyError("请求体为空");
+      return;
+    }
+    try {
+      JSON.parse(tempConfig.customRequestBody);
+      setCustomBodyError(null);
+    } catch (e: any) {
+      setCustomBodyError(`JSON 格式错误: ${e.message}`);
+    }
+  };
+
+  const filteredModels = availableModels.filter(m => 
+    m.toLowerCase().includes(modelFilter.toLowerCase())
+  );
 
   const fetchOpenAIModels = async () => {
     if (isLoading) return;
@@ -84,6 +112,19 @@ export function ConfigPanel({ authCode, open, onOpenChange, config, onSave, onRe
     if (authCode) handleAuthAdmin()
   }, [authCode])
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-model-select]')) {
+        setModelFilterOpen(false);
+      }
+    };
+    if (modelFilterOpen) {
+      document.addEventListener('click', handleClickOutside);
+    }
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [modelFilterOpen]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -92,7 +133,7 @@ export function ConfigPanel({ authCode, open, onOpenChange, config, onSave, onRe
           <DialogDescription>标准 OpenAI API 格式</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-5 py-4">
           <div className="space-y-2">
             <Label htmlFor="apiUrl">API URL</Label>
             <div className="flex gap-2">
@@ -136,27 +177,39 @@ export function ConfigPanel({ authCode, open, onOpenChange, config, onSave, onRe
           <div className="space-y-2">
             <Label htmlFor="model">模型</Label>
             <div className="flex gap-2">
-              {availableModels.length > 0 ? (
-                <Select value={tempConfig.model} onValueChange={(value) => setTempConfig({ ...tempConfig, model: value as any })}>
-                  <SelectTrigger className="w-full" id="model">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableModels.map((model) => (
-                      <SelectItem key={model} value={model}>
-                        {model}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
+              <div className="relative flex-1" data-model-select>
                 <Input
                   id="model"
                   value={tempConfig.model}
-                  onChange={(e) => setTempConfig({ ...tempConfig, model: e.target.value })}
-                  placeholder="gpt-3.5-turbo"
+                  onChange={(e) => {
+                    setTempConfig({ ...tempConfig, model: e.target.value });
+                    setModelFilter(e.target.value);
+                    setModelFilterOpen(true);
+                  }}
+                  onFocus={() => availableModels.length > 0 && setModelFilterOpen(true)}
+                  placeholder={availableModels.length > 0 ? "输入关键字过滤..." : "gpt-3.5-turbo"}
                 />
-              )}
+                {availableModels.length > 0 && modelFilterOpen && (
+                  <div className="absolute z-50 w-full mt-1 max-h-60 overflow-auto rounded-md border bg-popover shadow-md">
+                    {filteredModels.length > 0 ? (
+                      filteredModels.map((model) => (
+                        <div
+                          key={model}
+                          className="cursor-pointer px-3 py-2 text-sm hover:bg-accent"
+                          onClick={() => {
+                            setTempConfig({ ...tempConfig, model });
+                            setModelFilterOpen(false);
+                          }}
+                        >
+                          {model}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">无匹配模型</div>
+                    )}
+                  </div>
+                )}
+              </div>
               {tempConfig.apiUrl && tempConfig.apiKey && 
                 <Button 
                   onClick={fetchOpenAIModels} 
@@ -208,16 +261,44 @@ export function ConfigPanel({ authCode, open, onOpenChange, config, onSave, onRe
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="customPrompt">自定义提示词</Label>
+            <Label className="flex items-center justify-between" htmlFor="customRequestBody">
+              <span>自定义请求体</span>
+              <span className="text-xs text-primary flex gap-2">
+                <span onClick={handleFillTemplate}>填入模版</span>
+                <span onClick={handleValidateJson}>验证格式</span>
+                <span onClick={() => setcustomPromptVisible(!customPromptVisible)}>{customPromptVisible ? "隐藏" : "展示"}提示词</span>
+              </span>
+            </Label>
             <Textarea
-              id="customPrompt"
-              value={tempConfig.customPrompt}
-              onChange={(e) => setTempConfig({ ...tempConfig, customPrompt: e.target.value })}
-              placeholder="你是一个专业的文章校对编辑..."
-              rows={4}
+              id="customRequestBody"
+              value={tempConfig.customRequestBody}
+              onChange={(e) => {
+                setTempConfig({ ...tempConfig, customRequestBody: e.target.value });
+                setCustomBodyError(null);
+              }}
+              placeholder={JSON.stringify(defaultRequest)}
+              rows={3}
             />
+            {customBodyError && (
+              <p className="text-xs text-destructive flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />{customBodyError}
+              </p>
+            )}
           </div>
         </div>
+
+        {customPromptVisible && <div className="space-y-2">
+          <Label htmlFor="customPrompt">
+            <span>自定义提示词</span>
+          </Label>
+          <Textarea
+            id="customPrompt"
+            value={tempConfig.customPrompt}
+            onChange={(e) => setTempConfig({ ...tempConfig, customPrompt: e.target.value })}
+            placeholder="你是一个专业的文章校对编辑..."
+            rows={4}
+          />
+        </div>}
 
         <div className="flex justify-between gap-2">
           <Button 

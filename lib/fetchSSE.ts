@@ -22,10 +22,36 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3)
     throw new Error("校对失败，超过最大重试次数，请稍后重试或检查配置参数");
 }
 
+export const defaultRequest = {
+    add_generation_prompt: true,
+    enable_thinking: false,
+    temperature: 0.1
+}
+
 export default async function fetchSSE(config: fetchSSEParams) {
     const startTime = new Date();
     const signal = (config.controller || new AbortController()).signal
     const requestUrl = config.useProxy ? `/api/proxy?url=${encodeURIComponent(config.apiUrl)}` : config.apiUrl;
+
+    let requestBody: Record<string, any> = {
+        model: config.model,
+        messages: [
+            { role: "system", content: config.customPrompt },
+            { role: "user", content: config.inputText },
+        ],
+        stream: true,
+        include_usage: true,
+        ...defaultRequest
+    }
+
+    if (config.customRequestBody?.trim()) {
+        try {
+            const customBody = JSON.parse(config.customRequestBody)
+            requestBody = { ...requestBody, ...customBody }
+        } catch (e) {
+            console.warn("customRequestBody JSON 解析失败，将使用默认请求体")
+        }
+    }
 
     const response = await fetchWithRetry(requestUrl, {
         method: "POST",
@@ -33,19 +59,7 @@ export default async function fetchSSE(config: fetchSSEParams) {
             Authorization: `Bearer ${config.apiKey}`,
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-            model: config.model,
-            messages: [
-                { role: "system", content: config.customPrompt },
-                { role: "user", content: config.inputText },
-            ],
-            stream: true,
-            include_usage: true,
-            add_generation_prompt: true,
-            enable_thinking: false,
-            // reasoning_effort: "low",
-            temperature: 0.1
-        }),
+        body: JSON.stringify(requestBody),
         signal,
     })
 

@@ -20,6 +20,7 @@ export interface ProofreadingConfig {
   firecrawlKey: string
   pollinationsKey: string
   customPrompt: string
+  customRequestBody: string
 }
 
 export interface HistoryEntry {
